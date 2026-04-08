@@ -1,0 +1,23 @@
+public class ReplenishmentHandler {
+
+    public static void sendApprovalEmail(List<Replenishment_Request__c> approvedRequests) {
+
+        List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
+
+        for(Replenishment_Request__c req : approvedRequests) {
+
+            Product__c prod = [SELECT Name FROM Product__c WHERE Id = :req.Product__c LIMIT 1];
+
+            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+            mail.setToAddresses(new String[] {'warehouse@replastix.com'});
+            mail.setSubject('Replenishment Approved - ' + prod.Name);
+            mail.setPlainTextBody('Stock approved for replenishment. Please restock product: ' + prod.Name);
+
+            emails.add(mail);
+        }
+
+        if(!emails.isEmpty()) {
+            Messaging.sendEmail(emails);
+        }
+    }
+}
