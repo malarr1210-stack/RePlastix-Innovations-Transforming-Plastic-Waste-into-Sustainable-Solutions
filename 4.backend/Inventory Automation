@@ -1,0 +1,39 @@
+trigger ProductStockTrigger on Product__c (after update) {
+    
+    List<Task> tasksToCreate = new List<Task>();
+    List<Order__c> ordersToUpdate = new List<Order__c>();
+    List<Replenishment_Request__c> requests = new List<Replenishment_Request__c>();
+
+    for(Product__c prod : Trigger.new) {
+        Product__c oldProd = Trigger.oldMap.get(prod.Id);
+
+        // Check if stock dropped below threshold
+        if(prod.Stock__c < prod.Threshold__c && oldProd.Stock__c >= oldProd.Threshold__c) {
+
+            // 1. Create Task
+            Task t = new Task();
+            t.Subject = 'Low Stock Alert';
+            t.WhatId = prod.Id;
+            t.OwnerId = prod.OwnerId;
+            t.Status = 'Not Started';
+            t.Priority = 'High';
+            tasksToCreate.add(t);
+
+            // 2. Update related Orders
+            for(Order__c ord : [SELECT Id, Status__c FROM Order__c WHERE Product__c = :prod.Id]) {
+                ord.Status__c = 'Stock Low';
+                ordersToUpdate.add(ord);
+            }
+
+            // 3. Create Replenishment Request
+            Replenishment_Request__c req = new Replenishment_Request__c();
+            req.Product__c = prod.Id;
+            req.Status__c = 'Pending Approval';
+            requests.add(req);
+        }
+    }
+
+    if(!tasksToCreate.isEmpty()) insert tasksToCreate;
+    if(!ordersToUpdate.isEmpty()) update ordersToUpdate;
+    if(!requests.isEmpty()) insert requests;
+}
