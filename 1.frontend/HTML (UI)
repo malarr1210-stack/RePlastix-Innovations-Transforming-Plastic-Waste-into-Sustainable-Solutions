@@ -1,0 +1,11 @@
+<template>
+    <lightning-card title="Account List">
+        <template if:true={accounts}>
+            <ul>
+                <template for:each={accounts} for:item="acc">
+                    <li key={acc.Id}>{acc.Name} - {acc.Industry}</li>
+                </template>
+            </ul>
+        </template>
+    </lightning-card>
+</template>
