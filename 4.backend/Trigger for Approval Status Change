@@ -1,0 +1,16 @@
+trigger ReplenishmentTrigger on Replenishment_Request__c (after update) {
+
+    List<Replenishment_Request__c> approvedList = new List<Replenishment_Request__c>();
+
+    for(Replenishment_Request__c req : Trigger.new) {
+        Replenishment_Request__c oldReq = Trigger.oldMap.get(req.Id);
+
+        if(req.Status__c == 'Approved' && oldReq.Status__c != 'Approved') {
+            approvedList.add(req);
+        }
+    }
+
+    if(!approvedList.isEmpty()) {
+        ReplenishmentHandler.sendApprovalEmail(approvedList);
+    }
+}
